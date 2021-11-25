@@ -252,20 +252,32 @@ binder::Status NetdNativeService::bandwidthSetGlobalAlert(int64_t bytes) {
     return statusFromErrcode(res);
 }
 
-binder::Status NetdNativeService::bandwidthAddNaughtyApp(int32_t) {
-    return binder::Status::fromExceptionCode(binder::Status::EX_UNSUPPORTED_OPERATION);
+binder::Status NetdNativeService::bandwidthAddNaughtyApp(int32_t uid) {
+    NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
+    int res = gCtls->bandwidthCtrl.addNaughtyApps(appStrUids);
+    return statusFromErrcode(res);
 }
 
-binder::Status NetdNativeService::bandwidthRemoveNaughtyApp(int32_t) {
-    return binder::Status::fromExceptionCode(binder::Status::EX_UNSUPPORTED_OPERATION);
+binder::Status NetdNativeService::bandwidthRemoveNaughtyApp(int32_t uid) {
+    NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
+    int res = gCtls->bandwidthCtrl.removeNaughtyApps(appStrUids);
+    return statusFromErrcode(res);
 }
 
-binder::Status NetdNativeService::bandwidthAddNiceApp(int32_t) {
-    return binder::Status::fromExceptionCode(binder::Status::EX_UNSUPPORTED_OPERATION);
+binder::Status NetdNativeService::bandwidthAddNiceApp(int32_t uid) {
+    NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
+    int res = gCtls->bandwidthCtrl.addNiceApps(appStrUids);
+    return statusFromErrcode(res);
 }
 
-binder::Status NetdNativeService::bandwidthRemoveNiceApp(int32_t) {
-    return binder::Status::fromExceptionCode(binder::Status::EX_UNSUPPORTED_OPERATION);
+binder::Status NetdNativeService::bandwidthRemoveNiceApp(int32_t uid) {
+    NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
+    int res = gCtls->bandwidthCtrl.removeNiceApps(appStrUids);
+    return statusFromErrcode(res);
 }
 
 // TODO: Remove this function when there are no users. Currently, it is still used by DNS resolver

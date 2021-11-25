@@ -39,6 +39,23 @@
 using android::base::Join;
 using android::base::StringAppendF;
 using android::base::StringPrintf;
+using android::net::gCtls;
+
+namespace {
+
+// Default maximum valid uid in a normal root user namespace. The maximum valid uid is used in
+// rules that exclude all possible UIDs in the namespace in order to match packets that have
+// no socket associated with them.
+constexpr const uid_t kDefaultMaximumUid = UID_MAX - 1;  // UID_MAX defined as UINT_MAX
+
+// Proc file containing the uid mapping for the user namespace of the current process.
+const char kUidMapProcFile[] = "/proc/self/uid_map";
+
+bool getBpfOwnerStatus() {
+    return gCtls->trafficCtrl.getBpfEnabled();
+}
+
+}  // namespace
 
 namespace android {
 namespace net {
@@ -70,7 +87,18 @@ FirewallController::FirewallController(void) {
 }
 
 int FirewallController::setupIptablesHooks(void) {
-    return flushRules();
+    int res = flushRules();
+
+    // mUseBpfOwnerMatch should be removed, but it is still depended upon by test code.
+    mUseBpfOwnerMatch = getBpfOwnerStatus();
+    if (mUseBpfOwnerMatch) {
+        return res;
+    }
+    res |= createChain(LOCAL_DOZABLE, getFirewallType(DOZABLE));
+    res |= createChain(LOCAL_STANDBY, getFirewallType(STANDBY));
+    res |= createChain(LOCAL_POWERSAVE, getFirewallType(POWERSAVE));
+    res |= createChain(LOCAL_RESTRICTED, getFirewallType(RESTRICTED));
+    return res;
 }
 
 int FirewallController::setFirewallType(FirewallType ftype) {

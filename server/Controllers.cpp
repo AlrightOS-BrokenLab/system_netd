@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 
+#include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <netdutils/Stopwatch.h>
@@ -274,10 +275,11 @@ void Controllers::initIptablesRules() {
 }
 
 void Controllers::init() {
+    bool ebpf_supported = android::base::GetBoolProperty("ro.kernel.ebpf.supported", true);
     initIptablesRules();
     Stopwatch s;
 
-    if (int ret = bandwidthCtrl.enableBandwidthControl()) {
+    if (int ret = bandwidthCtrl.enableBandwidthControl() && ebpf_supported) {
         gLog.error("Failed to initialize BandwidthController (%s)", strerror(-ret));
         // A failure to init almost definitely means that iptables failed to load
         // our static ruleset, which then basically means network accounting will not work.
@@ -286,6 +288,10 @@ void Controllers::init() {
         // a mainline update breaking things.
         exit(1);
     }
+    gLog.info("Initializing traffic control: %" PRId64 "us", s.getTimeAndResetUs());
+
+    bandwidthCtrl.setBpfEnabled(trafficCtrl.getBpfEnabled());
+    bandwidthCtrl.enableBandwidthControl();
     gLog.info("Enabling bandwidth control: %" PRId64 "us", s.getTimeAndResetUs());
 
     if (int ret = RouteController::Init(NetworkController::LOCAL_NET_ID)) {
